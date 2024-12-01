@@ -1,0 +1,16 @@
+# Cargo.toml
+[package]
+name = "aoc-cli"
+authors = ["Philip Linden <lindenphilipj@gmail.com>"]
+version = "0.1.0"
+edition = "2021"
+description = "Streamlined build and development CLI for Advent of Code"
+
+[dependencies]
+cargo-generate = "0.22.0"
+cargo-watch = "8.5.3"
+clap = { version = "4.0.32", features = ["derive"] }
+
+[[bin]]
+name = "aoc"
+path = "src/main.rs"
