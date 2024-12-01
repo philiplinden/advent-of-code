@@ -17,3 +17,5 @@ I could probably reuse some of this as a template for game jams and the like.
 
 I experimented with nushell for a bit, but I think I'll spend some time making a
 proper CLI tool in rust or python. I'll start with rust for practice.
+
+I made the rust CLI and like it a lot so far.

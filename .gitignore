@@ -1,8 +1,6 @@
-*.dSYM
 .DS_Store
 .vscode
 target
-main
 input*.txt
 .env
 Cargo.lock
