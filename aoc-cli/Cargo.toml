@@ -1,28 +1,28 @@
 # Cargo.toml
 [package]
-    name = "aoc-cli"
-    authors = ["Philip Linden <lindenphilipj@gmail.com>"]
-    version = "0.1.0"
-    edition = "2021"
-    description = "Streamlined build and development CLI for Advent of Code"
+name = "aoc-cli"
+authors = ["Philip Linden <lindenphilipj@gmail.com>"]
+version = "0.2.0"
+edition = "2021"
+description = "Streamlined build and development CLI for Advent of Code"
 
 [dependencies]
-    chrono = "0.4"
-    clap = { version = "4.0", features = ["derive"] }
-    dotenv = { version = "0.15.0", features = ["clap"] }
-    include_dir = "0.7.4"
-    log = { version = "0.4.22", features = [
-        "max_level_debug",
-        "release_max_level_info",
-    ] }
-    nom.workspace = true
+chrono = "0.4"
+clap = { version = "4.0", features = ["derive"] }
+dotenv = { version = "0.15.0", features = ["clap"] }
+include_dir = "0.7.4"
+log = { version = "0.4.22", features = [
+    "max_level_debug",
+    "release_max_level_info",
+] }
+nom.workspace = true
 pretty_env_logger = "0.5.0"
-    reqwest = { version = "0.12", features = ["blocking"] }
+reqwest = { version = "0.12", features = ["blocking"] }
 tempfile.workspace = true
 
 [[bin]]
-    name = "aoc"
-    path = "src/main.rs"
+name = "aoc"
+path = "src/main.rs"
 
 [resources]
-    include = ["src/daily-template/*"]
+include = ["src/daily-template/*"]

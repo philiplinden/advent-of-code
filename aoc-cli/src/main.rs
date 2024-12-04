@@ -38,8 +38,8 @@ fn main() {
         Jobs::New { year, day } => {
             handle_new(year.unwrap_or(default_year), day.unwrap_or(default_day))
         }
-        Jobs::Fetch { year, day } => {
-            handle_fetch(year.unwrap_or(default_year), day.unwrap_or(default_day))
+        Jobs::Fetch { year, day, output_directory } => {
+            handle_fetch(year.unwrap_or(default_year), day.unwrap_or(default_day), output_directory)
         }
         Jobs::Test { year, day, part } => handle_test(
             year.unwrap_or(default_year),
@@ -72,6 +72,8 @@ pub enum Jobs {
         year: Option<u32>,
         #[arg(short, long)]
         day: Option<u32>,
+        #[arg(short, long)]
+        output_directory: Option<PathBuf>,
     },
     /// Runs tests for the specified year, day, and part of the Advent of Code challenge.
     Test {
@@ -162,7 +164,7 @@ fn handle_new(year: u32, day: u32) {
     let template_dir = unpack_template().expect("Failed to unpack template");
     let destination = get_year_dir(year);
     match run_cargo_generate(&template_dir, &destination, &format!("day-{:02}", day)) {
-        Ok(_) => handle_fetch(year, day),
+        Ok(_) => handle_fetch(year, day, None),
         Err(e) => {
             error!("Failed to run cargo generate: {}", e);
             error!("If you meant to just get the input data, use the fetch command instead.");
@@ -170,14 +172,18 @@ fn handle_new(year: u32, day: u32) {
     }
 }
 
-fn handle_fetch(year: u32, day: u32) {
+fn handle_fetch(year: u32, day: u32, output_directory: Option<PathBuf>) {
     let Some(session) = get_env_var("SESSION") else {
         error!("SESSION environment variable not set");
         return;
     };
     let url = format!("https://adventofcode.com/{}/day/{}/input", year, day);
 
-    let day_dir = get_day_dir(year, day);
+    let destination = if let Some(output_directory) = output_directory {
+        output_directory.join(format!("day-{:02}", day))
+    } else {
+        get_day_dir(year, day)
+    };
 
     let client = Client::new();
     let input_data = client
@@ -189,7 +195,7 @@ fn handle_fetch(year: u32, day: u32) {
         .expect("Failed to read response text");
 
     for filename in ["input1.txt", "input2.txt"] {
-        let file_path = day_dir.join(filename);
+        let file_path = destination.join(filename);
         let mut file = File::create(&file_path).expect("should be able to create a file");
 
         file.write_all(input_data.as_bytes())
