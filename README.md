@@ -14,7 +14,7 @@ Borrows some tooling from
 - [cargo-watch](https://github.com/watchexec/cargo-watch)
 
 ```sh
-cargo install just cargo-generate cargo-watch
+cargo install cargo-generate cargo-watch
 ```
 
 ### 2. Create `.env` file
@@ -31,10 +31,19 @@ for `session` from the cookie.
 echo "SESSION=PASTE_COOKIE_VALUE_HERE" > .env
 ```
 
-### 3. Build the workspace
+### 3. (Optional) Build & install the CLI helper
 
 ```sh
-cargo build
+cargo install --path aoc-cli --release
 ```
 
 ## Daily Setup
+
+```sh
+aoc new
+```
+Or to specify a year and day:
+
+```sh
+aoc new --year 2024 --day 1
+```

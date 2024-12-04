@@ -1,9 +1,25 @@
 use chrono::{Datelike, Local};
 use clap::{Args, Parser, Subcommand};
-use std::{path::PathBuf, process::Command as ShellCommand};
+use reqwest::{blocking::Client, header::COOKIE};
+use std::{
+    env,
+    fs::File,
+    io::{Write, Error},
+    path::PathBuf,
+    process::Command as ShellCommand,
+};
+use include_dir::{include_dir, Dir};
+use log::{error, info};
+
+static TEMPLATE_PATH: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/daily-template");
 
 #[derive(Parser, Debug, Clone)]
-#[command(author, version, about, long_about = None)]
+#[command(
+    author,
+    version,
+    about = "Streamlined build and development CLI for Advent of Code",
+    long_about = None
+)]
 struct Cli {
     #[command(subcommand)]
     job: Jobs,
@@ -14,17 +30,19 @@ struct Cli {
 
 #[derive(Args, Debug, Clone)]
 struct CommonArgs {
-    #[arg(long)]
+    #[arg(short, long, help = "Specify the year")]
     year: Option<u32>,
 
-    #[arg(long)]
+    #[arg(short, long, help = "Specify the day of the challenge")]
     day: Option<u32>,
 
-    #[arg(long)]
+    #[arg(short, long, help = "Specify the part of the challenge to test or benchmark")]
     part: Option<u32>,
 }
 
 fn main() {
+    pretty_env_logger::init();
+    dotenv::dotenv().ok();
     let cli = Cli::parse();
     cli.job.run(&cli.args);
 }
@@ -33,36 +51,39 @@ fn main() {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum Jobs {
+    /// Creates a new Advent of Code project for the specified year and day.
     New {
-        #[arg(long)]
+        #[arg(short, long)]
         year: Option<u32>,
-        #[arg(long)]
+        #[arg(short, long)]
         day: Option<u32>,
     },
+    /// Fetches the input data for the specified year and day from the Advent of Code website.
     Fetch {
-        #[arg(long)]
+        #[arg(short, long)]
         year: Option<u32>,
-        #[arg(long)]
+        #[arg(short, long)]
         day: Option<u32>,
-        #[arg(long)]
-        directory: Option<PathBuf>,
     },
+    /// Runs tests for the specified year, day, and part of the Advent of Code challenge.
     Test {
-        #[arg(long)]
+        #[arg(short, long)]
         year: Option<u32>,
-        #[arg(long)]
+        #[arg(short, long)]
         day: Option<u32>,
-        #[arg(long)]
+        #[arg(short, long)]
         part: Option<u32>,
     },
+    /// Benchmarks the specified year, day, and part of the Advent of Code challenge.
     Bench {
-        #[arg(long)]
+        #[arg(short, long)]
         year: Option<u32>,
-        #[arg(long)]
+        #[arg(short, long)]
         day: Option<u32>,
-        #[arg(long)]
+        #[arg(short, long)]
         part: Option<u32>,
     },
+    /// Benchmarks all Advent of Code projects across all years.
     BenchAll,
 }
 
@@ -81,51 +102,107 @@ impl Jobs {
             Self::Test { .. } => handle_test(year, day, part),
             Self::Bench { .. } => handle_bench(year, day, part),
             Self::BenchAll => handle_bench_all(),
-            _ => unreachable!(),
         }
     }
 }
 
+fn get_env_var(key: &str) -> Option<String> {
+    match std::env::var(key) {
+        Ok(val) => Some(val),
+        Err(_) => {
+            error!("{} environment variable not set", key);
+            None
+        }
+    }
+}
+
+fn get_year_dir(year: u32) -> PathBuf {
+    let year_dir = PathBuf::from(format!("{}", year));
+    if !year_dir.exists() {
+        std::fs::create_dir_all(&year_dir).expect("Failed to create year directory");
+    }
+    year_dir
+}
+
 fn get_day_dir(year: u32, day: u32) -> PathBuf {
-    PathBuf::from(format!("{}/day-{:02}", year, day))
+    let year_dir = get_year_dir(year);
+    let day_dir = year_dir.join(format!("day-{:02}", day));
+    if !day_dir.exists() {
+        std::fs::create_dir_all(&day_dir).expect("Failed to create day directory");
+    }
+    day_dir
+}
+
+fn unpack_template() -> Result<PathBuf, std::io::Error> {
+    let temp_dir = tempfile::tempdir()?;
+    TEMPLATE_PATH.extract(&temp_dir.path())?;
+    Ok(temp_dir.into_path())
+}
+
+fn run_cargo_generate(project_name: &str, template_dir: &PathBuf) -> Result<(), Error> {
+    info!("running cargo generate with template {}", template_dir.display());
+    let output = ShellCommand::new("cargo")
+        .arg("generate")
+        .arg("--verbose")
+        .arg("--path")
+        .arg(&template_dir)
+        .arg("--name")
+        .arg(project_name)
+        .output()?;
+
+    if output.status.success() {
+        info!("cargo-generate succeeded");
+        Ok(())
+    } else {
+        Err(Error::new(
+            std::io::ErrorKind::Other,
+            String::from_utf8_lossy(&output.stderr),
+        ))
+    }
 }
 
 fn handle_new(year: u32, day: u32) {
-    let day_dir = get_day_dir(year, day);
-    let day_name = day_dir.file_name().unwrap().to_str().unwrap();
+    let template_dir = unpack_template().expect("Failed to unpack template");
+    let working_dir = env::current_dir().unwrap();
 
-    // Create the year directory if it doesn't exist
-    std::fs::create_dir_all(year.to_string()).expect("Failed to create year directory");
+    let year_dir = get_year_dir(year);
+    env::set_current_dir(&year_dir).expect("Failed to set current directory");
+    run_cargo_generate(
+        &format!("day-{:02}", day),
+        &template_dir,
+    )
+    .expect("Failed to run cargo generate");
 
-    ShellCommand::new("cargo")
-        .args(&["generate", "--path", "./daily-template", "--name", day_name])
-        .status()
-        .expect("Failed to execute create command");
-
-    // Move the generated directory to the year folder
-    if day_dir.exists() {
-        std::fs::remove_dir_all(&day_dir).expect("Failed to remove existing day directory");
-    }
-    std::fs::rename(day_name, &day_dir).expect("Failed to move day directory to year folder");
-
+    env::set_current_dir(&working_dir).expect("Failed to set current directory");
     handle_fetch(year, day);
 }
 
 fn handle_fetch(year: u32, day: u32) {
-    let session = std::env::var("SESSION").expect("SESSION environment variable not set");
+    let Some(session) = get_env_var("SESSION") else {
+        error!("SESSION environment variable not set");
+        return;
+    };
     let url = format!("https://adventofcode.com/{}/day/{}/input", year, day);
 
-    let response = reqwest::blocking::get(&url)
+    let day_dir = get_day_dir(year, day);
+
+    let client = Client::new();
+    let input_data = client
+        .get(url)
+        .header(COOKIE, format!("session={session}"))
+        .send()
         .expect("Failed to send request")
         .text()
         .expect("Failed to read response text");
 
-    let day_dir = get_day_dir(year, day);
-    std::fs::create_dir_all(&day_dir).expect("Failed to create day directory");
-    let input_path = day_dir.join("input.txt");
-    std::fs::write(&input_path, response).expect("Failed to write input file");
+    for filename in ["input1.txt", "input2.txt"] {
+        let file_path = day_dir.join(filename);
+        let mut file = File::create(&file_path).expect("should be able to create a file");
 
-    println!("Input for day {} saved to {}", day, input_path.display());
+        file.write_all(input_data.as_bytes())
+            .expect("should be able to write to input file");
+        info!("wrote {}", file_path.display());
+    }
 }
 
 fn handle_test(year: u32, day: u32, part: u32) {
