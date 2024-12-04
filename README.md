@@ -39,11 +39,23 @@ cargo install --path aoc-cli --release
 
 ## Daily Setup
 
+The `new` command will create a new project for the current year and day and
+generate a new project from [the template](aoc-cli/src/daily-template).
+
 ```sh
 aoc new
 ```
-Or to specify a year and day:
+
+To pull the input data for a specific year and/or day when generating a new
+project from the template:
 
 ```sh
 aoc new --year 2024 --day 1
+```
+
+Or to pull the input data for a specific year and/or day and save it to a
+specific directory:
+
+```sh
+aoc fetch --year 2024 --day 1 --output-directory ./my_happy_place
 ```
