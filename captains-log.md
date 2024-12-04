@@ -1,5 +1,14 @@
 # captain's log
 
+## 2024-12-04
+
+I finished the CLI and added a few more features. I added the ability to fetch
+input data for a specific year and/or day and save it to a specific directory.
+The `new` command will create a new project for the current year and day and
+generate a new project from [the template](aoc-cli/src/daily-template).
+
+I finally started day 1 -> [day-01 log](2024/day-01/README.md).
+
 ## 2024-12-01
 
 Trying out advent of code for the first time. I'm trying out some tooling

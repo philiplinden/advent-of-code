@@ -1,5 +1,5 @@
 [package]
-name = "{{project-name}}"
+name = "day-01"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,15 +7,15 @@ edition = "2021"
 
 [dependencies]
 itertools.workspace = true
-miette.workspace = true
 nom.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+rayon.workspace = true
 
 [dev-dependencies]
 test-log.workspace = true
 
 [[bench]]
-name = "{{project-name}}-bench"
+name = "day-01-bench"
 path = "benches/benchmarks.rs"
 harness = false
