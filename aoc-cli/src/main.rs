@@ -1,15 +1,14 @@
 use chrono::{Datelike, Local};
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
+use include_dir::{include_dir, Dir};
+use log::{error, info};
 use reqwest::{blocking::Client, header::COOKIE};
 use std::{
-    env,
     fs::File,
-    io::{Write, Error},
+    io::{Error, Write},
     path::PathBuf,
     process::Command as ShellCommand,
 };
-use include_dir::{include_dir, Dir};
-use log::{error, info};
 
 static TEMPLATE_PATH: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/daily-template");
 
@@ -23,28 +22,37 @@ static TEMPLATE_PATH: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/daily-template
 struct Cli {
     #[command(subcommand)]
     job: Jobs,
-
-    #[command(flatten)]
-    args: CommonArgs,
-}
-
-#[derive(Args, Debug, Clone)]
-struct CommonArgs {
-    #[arg(short, long, help = "Specify the year")]
-    year: Option<u32>,
-
-    #[arg(short, long, help = "Specify the day of the challenge")]
-    day: Option<u32>,
-
-    #[arg(short, long, help = "Specify the part of the challenge to test or benchmark")]
-    part: Option<u32>,
 }
 
 fn main() {
     pretty_env_logger::init();
     dotenv::dotenv().ok();
     let cli = Cli::parse();
-    cli.job.run(&cli.args);
+    let (default_year, default_day, default_part) = {
+        let year = Local::now().year() as u32;
+        let day = Local::now().day() as u32;
+        let part = 1;
+        (year, day, part)
+    };
+    match cli.job {
+        Jobs::New { year, day } => {
+            handle_new(year.unwrap_or(default_year), day.unwrap_or(default_day))
+        }
+        Jobs::Fetch { year, day } => {
+            handle_fetch(year.unwrap_or(default_year), day.unwrap_or(default_day))
+        }
+        Jobs::Test { year, day, part } => handle_test(
+            year.unwrap_or(default_year),
+            day.unwrap_or(default_day),
+            part.unwrap_or(default_part),
+        ),
+        Jobs::Bench { year, day, part } => handle_bench(
+            year.unwrap_or(default_year),
+            day.unwrap_or(default_day),
+            part.unwrap_or(default_part),
+        ),
+        Jobs::BenchAll => handle_bench_all(),
+    }
 }
 
 // =================== JOBS ====================================================
@@ -87,25 +95,6 @@ pub enum Jobs {
     BenchAll,
 }
 
-impl Jobs {
-    fn run(&self, args: &CommonArgs) {
-        let (year, day, part) = {
-            let year = args.year.unwrap_or_else(|| Local::now().year() as u32);
-            let day = args.day.unwrap_or_else(|| Local::now().day() as u32);
-            let part = args.part.unwrap_or(1);
-            (year, day, part)
-        };
-
-        match self {
-            Self::New { .. } => handle_new(year, day),
-            Self::Fetch { .. } => handle_fetch(year, day),
-            Self::Test { .. } => handle_test(year, day, part),
-            Self::Bench { .. } => handle_bench(year, day, part),
-            Self::BenchAll => handle_bench_all(),
-        }
-    }
-}
-
 fn get_env_var(key: &str) -> Option<String> {
     match std::env::var(key) {
         Ok(val) => Some(val),
@@ -139,15 +128,23 @@ fn unpack_template() -> Result<PathBuf, std::io::Error> {
     Ok(temp_dir.into_path())
 }
 
-fn run_cargo_generate(project_name: &str, template_dir: &PathBuf) -> Result<(), Error> {
-    info!("running cargo generate with template {}", template_dir.display());
+fn run_cargo_generate(template_dir: &PathBuf, destination: &PathBuf, name: &str) -> Result<(), Error> {
+    let project_directory = destination.join(name);
+    if project_directory.exists() && project_directory.read_dir()?.count() > 0 {
+        return Err(Error::new(
+            std::io::ErrorKind::Other,
+            format!("destination path is not empty: {}", project_directory.display()),
+        ));
+    }
     let output = ShellCommand::new("cargo")
         .arg("generate")
         .arg("--verbose")
         .arg("--path")
         .arg(&template_dir)
+        .arg("--destination")
+        .arg(destination)
         .arg("--name")
-        .arg(project_name)
+        .arg(name)
         .output()?;
 
     if output.status.success() {
@@ -163,18 +160,14 @@ fn run_cargo_generate(project_name: &str, template_dir: &PathBuf) -> Result<(), 
 
 fn handle_new(year: u32, day: u32) {
     let template_dir = unpack_template().expect("Failed to unpack template");
-    let working_dir = env::current_dir().unwrap();
-
-    let year_dir = get_year_dir(year);
-    env::set_current_dir(&year_dir).expect("Failed to set current directory");
-    run_cargo_generate(
-        &format!("day-{:02}", day),
-        &template_dir,
-    )
-    .expect("Failed to run cargo generate");
-
-    env::set_current_dir(&working_dir).expect("Failed to set current directory");
-    handle_fetch(year, day);
+    let destination = get_year_dir(year);
+    match run_cargo_generate(&template_dir, &destination, &format!("day-{:02}", day)) {
+        Ok(_) => handle_fetch(year, day),
+        Err(e) => {
+            error!("Failed to run cargo generate: {}", e);
+            error!("If you meant to just get the input data, use the fetch command instead.");
+        }
+    }
 }
 
 fn handle_fetch(year: u32, day: u32) {
