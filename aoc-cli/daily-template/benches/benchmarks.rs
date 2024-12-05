@@ -1,4 +1,4 @@
-use day_01::*;
+use day_0::*;
 
 fn main() -> miette::Result<()> {
     // Run registered benchmarks.

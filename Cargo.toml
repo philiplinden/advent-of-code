@@ -2,7 +2,10 @@
 package.authors = ["Philip Linden <lindenphilipj@gmail.com>"]
 resolver = "2"
 
-members = ["aoc-cli"]
+members = [
+    "aoc-cli",
+    "2024/day-*",
+]
 default-members = ["aoc-cli"]
 
 [workspace.dependencies]
@@ -10,8 +13,10 @@ default-members = ["aoc-cli"]
 glam = "0.29.0"
 rayon = "1.10.0"
 
-# error handling
+# diagnostics
+divan = "0.1.16"
 thiserror = "2.0.3"
+miette = "7.4.0"
 
 # logging
 log = "0.4.22"
@@ -22,6 +27,3 @@ nom = "7.1.3"
 nom_locate = "4.2.0"
 nom-supreme = "0.8.0"
 tempfile = "3.3"
-
-# profiling
-divan = "0.1.16"
