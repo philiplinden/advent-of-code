@@ -28,7 +28,7 @@ fn main() {
     pretty_env_logger::init();
     dotenv::dotenv().ok();
     let cli = Cli::parse();
-    let (default_year, default_day, default_part) = {
+    let (default_year, default_day, _default_part) = {
         let year = Local::now().year() as u32;
         let day = Local::now().day() as u32;
         let part = 1;
@@ -41,17 +41,6 @@ fn main() {
         Jobs::Fetch { year, day, output_directory } => {
             handle_fetch(year.unwrap_or(default_year), day.unwrap_or(default_day), output_directory)
         }
-        Jobs::Test { year, day, part } => handle_test(
-            year.unwrap_or(default_year),
-            day.unwrap_or(default_day),
-            part.unwrap_or(default_part),
-        ),
-        Jobs::Bench { year, day, part } => handle_bench(
-            year.unwrap_or(default_year),
-            day.unwrap_or(default_day),
-            part.unwrap_or(default_part),
-        ),
-        Jobs::BenchAll => handle_bench_all(),
     }
 }
 
@@ -75,26 +64,6 @@ pub enum Jobs {
         #[arg(short, long)]
         output_directory: Option<PathBuf>,
     },
-    /// Runs tests for the specified year, day, and part of the Advent of Code challenge.
-    Test {
-        #[arg(short, long)]
-        year: Option<u32>,
-        #[arg(short, long)]
-        day: Option<u32>,
-        #[arg(short, long)]
-        part: Option<u32>,
-    },
-    /// Benchmarks the specified year, day, and part of the Advent of Code challenge.
-    Bench {
-        #[arg(short, long)]
-        year: Option<u32>,
-        #[arg(short, long)]
-        day: Option<u32>,
-        #[arg(short, long)]
-        part: Option<u32>,
-    },
-    /// Benchmarks all Advent of Code projects across all years.
-    BenchAll,
 }
 
 fn get_env_var(key: &str) -> Option<String> {
@@ -201,51 +170,5 @@ fn handle_fetch(year: u32, day: u32, output_directory: Option<PathBuf>) {
         file.write_all(input_data.as_bytes())
             .expect("should be able to write to input file");
         info!("wrote {}", file_path.display());
-    }
-}
-
-fn handle_test(year: u32, day: u32, part: u32) {
-    let day_dir = get_day_dir(year, day);
-    let day_name = day_dir.file_name().unwrap().to_str().unwrap();
-
-    ShellCommand::new("cargo")
-        .args(&["nextest", "run", "-p", day_name, &part.to_string()])
-        .current_dir(year.to_string())
-        .status()
-        .expect("Failed to execute test command");
-}
-
-fn handle_bench(year: u32, day: u32, part: u32) {
-    let day_dir = get_day_dir(year, day);
-    let day_name = day_dir.file_name().unwrap().to_str().unwrap();
-
-    ShellCommand::new("cargo")
-        .args(&[
-            "bench",
-            "--bench",
-            &format!("{}-bench", day_name),
-            &part.to_string(),
-        ])
-        .current_dir(year.to_string())
-        .output()
-        .expect("Failed to execute bench command");
-}
-
-fn handle_bench_all() {
-    // Find all year directories
-    for entry in std::fs::read_dir(".").expect("Failed to read directory") {
-        let entry = entry.expect("Failed to read directory entry");
-        let path = entry.path();
-        if path.is_dir() {
-            if let Some(year_str) = path.file_name().and_then(|n| n.to_str()) {
-                if let Ok(_year) = year_str.parse::<u32>() {
-                    ShellCommand::new("cargo")
-                        .args(&["bench", "-q"])
-                        .current_dir(path)
-                        .output()
-                        .expect("Failed to execute bench command");
-                }
-            }
-        }
     }
 }

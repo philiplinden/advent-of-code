@@ -1,5 +1,10 @@
 # captain's log
 
+## 2024-12-05
+
+I'm on a cleaning streak. I'm going through and deleting all the pieces of the
+templates and CLI that I don't use.
+
 ## 2024-12-04
 
 I finished the CLI and added a few more features. I added the ability to fetch
@@ -8,6 +13,9 @@ The `new` command will create a new project for the current year and day and
 generate a new project from [the template](aoc-cli/src/daily-template).
 
 I finally started day 1 -> [day-01 log](2024/day-01/README.md).
+
+I'm going for speed. Beyond solving the problem, I want to see how fast I can
+get the code to run.
 
 ## 2024-12-01
 

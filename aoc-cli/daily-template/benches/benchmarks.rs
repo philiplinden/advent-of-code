@@ -1,22 +1,23 @@
-use {{crate_name}}::*;
+use day_01::*;
 
-fn main() {
+fn main() -> miette::Result<()> {
     // Run registered benchmarks.
     divan::main();
+    Ok(())
 }
 
 #[divan::bench]
-fn part1() {
+fn part1() -> miette::Result<()> {
     part1::process(divan::black_box(include_str!(
         "../input1.txt",
-    )))
-    .unwrap();
+    )))?;
+    Ok(())
 }
 
 #[divan::bench]
-fn part2() {
+fn part2() -> miette::Result<()> {
     part2::process(divan::black_box(include_str!(
         "../input2.txt",
-    )))
-    .unwrap();
+    )))?;
+    Ok(())
 }
