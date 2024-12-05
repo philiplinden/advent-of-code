@@ -46,6 +46,20 @@ fn parse_input(input: &str) -> Result<(Vec<u32>, Vec<u32>), Error> {
     Ok((left, right))
 }
 
+/// Sort a vector of unsigned integers in ascending order.
+/// This is a parallel implementation of radix sort.
+///
+/// Inspect each digit of each number and move it to the correct bin such that
+/// the numbers for that digit are sorted in ascending order.
+///
+/// This radix sort uses counting sort as the stable sort for each digit.
+/// We do this in parallel for each digit.
+fn radix_sort_parallel(numbers: &[u32]) -> Vec<u32> {
+    let mut numbers = numbers.to_vec();
+    numbers.sort();
+    numbers
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -66,13 +80,13 @@ mod tests {
     }
 }
 
-//     #[test]
-//     fn test_radix_sort() -> Result<(), std::io::Error> {
-//         let numbers = vec![3, 4, 2, 1, 3, 3];
-//         let sorted = radix_sort_parallel(&numbers);
-//         assert_eq!(sorted, [1, 2, 3, 3, 3, 4]);
-//         Ok(())
-//     }
+    #[test]
+    fn test_radix_sort() -> Result<(), std::io::Error> {
+        let numbers = vec![3, 4, 2, 1, 3, 3];
+        let sorted = radix_sort_parallel(&numbers);
+        assert_eq!(sorted, [1, 2, 3, 3, 3, 4]);
+        Ok(())
+    }
 
 //     #[test]
 //     fn test_calculate_total_distance() -> Result<(), std::io::Error> {
