@@ -1,14 +1,20 @@
+use aoc_tools::load_input_file;
 use miette::Result;
 
 pub fn process(input: &str) -> Result<String> {
-    let (left, right) = parse_input(input)?;
+    // load the input file into a string
+    // TODO: handle errors. unwrap is ok for now
+    let input = load_input_file(input).unwrap();
+
+    // parse the input file as two lists of unsigned integers
+    let (left, right) = parse_input(&input)?;
+
     Ok("".to_string())
 }
 
 fn parse_input(input: &str) -> Result<(Vec<u32>, Vec<u32>)> {
     Ok((vec![], vec![]))
 }
-
 
 // #[cfg(test)]
 // mod tests {

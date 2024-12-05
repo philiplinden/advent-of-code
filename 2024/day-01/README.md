@@ -19,6 +19,8 @@
 
 ### solution
 
+#### Choosing a sorting algorithm
+
 I see two brute force solutions.
 
 1. sort both lists in ascending order, then iterate through the lists by index
@@ -43,4 +45,4 @@ index. The performance hit will come from sorting the lists.
 
 I'm going to try radix sort.
 
-Oh, I can't forget: I have to parse the input file too!
+#### Parsing the input file

@@ -6,6 +6,4 @@ description = "Common tools for advent of code problems"
 authors.workspace = true
 
 [dependencies]
-nom.workspace = true
-nom_supreme.workspace = true
-nom_locate.workspace = true
+miette.workspace = true
