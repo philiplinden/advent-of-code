@@ -1,40 +1,70 @@
-use aoc_tools::load_input_file;
-use miette::Result;
+use miette::{Result, Error};
+use log::info;
 
 pub fn process(input: &str) -> Result<String> {
-    // load the input file into a string
-    // TODO: handle errors. unwrap is ok for now
-    let input = load_input_file(input).unwrap();
-
     // parse the input file as two lists of unsigned integers
     let (left, right) = parse_input(&input)?;
 
-    Ok("".to_string())
+    // now sort each list
+    // let left_sorted = radix_sort_parallel(&left);
+    // let right_sorted = radix_sort_parallel(&right);
+
+    Ok(format!("{:?}", (left, right)))
 }
 
-fn parse_input(input: &str) -> Result<(Vec<u32>, Vec<u32>)> {
-    Ok((vec![], vec![]))
+/// Parse the input starting with two lists of unsigned integers.
+/// The input data looks like this:
+/// ```
+/// 3   4
+/// 4   3
+/// 2   5
+/// 1   3
+/// 3   9
+/// 3   3
+/// ```
+/// And the output will be two lists of integers:
+/// ```
+/// [3, 4, 2, 1, 3, 3]
+/// [4, 3, 5, 3, 9, 3]
+/// ```
+fn parse_input(input: &str) -> Result<(Vec<u32>, Vec<u32>), Error> {
+    info!("Parsing input string as two lists of unsigned integers");
+    let (left, right): (Vec<_>, Vec<_>) = input.lines()
+        .filter_map(|line| {
+            // each line is supposed to be two strings separated by three spaces
+            line.split_once("   ")
+                // if the split is successful, parse the strings as unsigned integers
+                .map(|(left, right)| (left.trim().parse::<u32>().ok(), right.trim().parse::<u32>().ok()))
+        })
+        // filter out any lines that don't split into two unsigned integers
+        .filter(|(left, right)| left.is_some() && right.is_some())
+        // unwrap the optional unsigned integers, since we know only valid lines make it through
+        .map(|(left, right)| (left.unwrap(), right.unwrap()))
+        // unzip the tuples into two vectors
+        .unzip();
+
+    Ok((left, right))
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     #[test]
-//     fn test_read_numbers() -> Result<(), std::io::Error> {
-//         let (left_numbers, right_numbers) = read_numbers(
-//             "
-// 3   4
-// 4   3
-// 2   5
-// 1   3
-// 3   9
-// 3   3
-//         ")?;
-//         assert_eq!(left_numbers, [3, 4, 2, 1, 3, 3]);
-//         assert_eq!(right_numbers, [4, 3, 5, 3, 9, 3]);
-//         Ok(())
-//     }
+    #[test]
+    fn test_parse_input() -> Result<(), Error> {
+        let (left_numbers, right_numbers) = parse_input("
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+        ")?;
+        assert_eq!(left_numbers, [3, 4, 2, 1, 3, 3]);
+        assert_eq!(right_numbers, [4, 3, 5, 3, 9, 3]);
+        Ok(())
+    }
+}
 
 //     #[test]
 //     fn test_radix_sort() -> Result<(), std::io::Error> {
