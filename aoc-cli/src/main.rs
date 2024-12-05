@@ -10,6 +10,8 @@ use std::{
     process::Command as ShellCommand,
 };
 
+use aoc_tools;
+
 static TEMPLATE_PATH: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/daily-template");
 
 #[derive(Parser, Debug, Clone)]
@@ -25,8 +27,7 @@ struct Cli {
 }
 
 fn main() {
-    pretty_env_logger::init();
-    dotenv::dotenv().ok();
+    aoc_tools::load_env();
     let cli = Cli::parse();
     let (default_year, default_day, _default_part) = {
         let year = Local::now().year() as u32;

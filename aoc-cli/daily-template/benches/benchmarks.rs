@@ -1,4 +1,4 @@
-use day_0::*;
+use {{crate_name}}::*;
 
 fn main() -> miette::Result<()> {
     // Run registered benchmarks.
