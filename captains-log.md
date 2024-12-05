@@ -5,6 +5,9 @@
 I'm on a cleaning streak. I'm going through and deleting all the pieces of the
 templates and CLI that I don't use.
 
+Now, before I even start on the day 1 problem I need to learn how to parse input
+files. The `nom` crate looks cool, but it's definitely overkill for this.
+
 ## 2024-12-04
 
 I finished the CLI and added a few more features. I added the ability to fetch
