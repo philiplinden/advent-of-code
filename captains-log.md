@@ -1,5 +1,23 @@
 # captain's log
 
+## 2024-12-08
+
+Ha, so I'm still on day 1. I'd rather finish one puzzle before moving to the
+next one. I'm learning a lot and proud of my progress so far.
+
+Finally finished day 1. I'm not sure I'll do the rest of the puzzles this year,
+but I'm glad I stuck with it until I finished at least one.
+
+I learned a lot about Rust and learned that parallelization is simpler to
+implement than I thought, but it's not always faster.
+
+This is (embarrassingly) the first time I've used tests. It worked out great. I
+wrote the tests while writing the [`README.md`](2024/day-01/README.md) and
+wrote them to prove the advent of code's example worked with my code.
+
+Benchmarks are also new to me. I used [divan](https://github.com/orium/divan)
+to benchmark the two implementations of part 1. It worked great.
+
 ## 2024-12-05
 
 I'm on a cleaning streak. I'm going through and deleting all the pieces of the

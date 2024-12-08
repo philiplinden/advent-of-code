@@ -5,6 +5,13 @@ Solutions for the [Advent of Code](http://adventofcode.com/)
 Borrows some tooling from
 [ChristopherBiscardi/advent-of-code](https://github.com/ChristopherBiscardi/advent-of-code).
 
+Daily notes are in [captains-log.md](captains-log.md).
+
+Notes for each challenge day are in the `2024/day-X/README.md` file.
+
+1. [2024/day-01](2024/day-01/README.md)
+
+
 ## Workspace Setup
 
 ### 1. Install dependencies

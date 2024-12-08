@@ -77,11 +77,8 @@ The counting sort algorithm is as follows:
 
 #### Radix sort
 
-Here's a couple tutorials on radix sort:
-- [Radix Sort Algorithm Introduction in 5 Minutes](https://www.youtube.com/watch?v=XiuSW_mEn7g)
-- [Radix Sort Part 1 - Intro to Parallel Programming](https://www.youtube.com/watch?v=dPwAA7j-8o4)
-
-Radix sort is an algorithm that builds on top of bucket sort or counting sort.
+[Radix sort](https://brilliant.org/wiki/radix-sort/) is an algorithm that builds
+on top of bucket sort or counting sort.
 
 1. Start with the least significant digit.
 2. Apply the counting sort algorithm to all the elements for this digit.
@@ -96,22 +93,9 @@ decrease in the number of times we need to apply the counting sort. All that is
 to say that the base `k` should be smaller than array size `n` for this to be
 efficient.
 
-To calculate `d` from `k`, `d = ceil(bit_width / log2(k))`. For example:
-- Base 2: `d = ceil(32 / 1) = 32`
-- Base 32: `d = ceil(32 / 5) = 7`
-- Base 256: `d = ceil(32 / 8) = 4`
-
-Maybe I could use a base 2 radix sort since I'm parsing the input as `u32`
-values, so then `k=2` and `d=32`, therefore `O(32(1e3+2)) = O(32064)`. That's
-worse. A base 32 radix sort would be `k=32, d=7`, so `O(7(1e3+32)) = O(7224)`.
-If `k=256` then `d=4`, so `O(4(1e3+256)) = O(4224)`. This is the best one so
-far in terms of time complexity but how does it perform with memory usage?
-
-Each unsigned integer is 4 bytes, so for 1000 elements thats 4000 bytes. The
-memory footprint scales as `n * 2^k`. A `u32` would require `2^32 * 4000` bytes,
-or 16 GB! `u8` would require `2^8 * 4000` bytes, or 1024000 bytes. Rust lets me
-use `u64`, `u32`, `u16`, or `u8`, so that is about as far as I can go. `u8::MAX`
-is 255, so we're back at `k=256`, nice.
+A simple rule of thumb to find an optimal base is to find the smallest power of
+2 greater than the array length `n`. I found this in multiple places as
+anecdotal evidence, but I never found a source that proved it.
 
 ### Parsing the input file
 
@@ -129,4 +113,66 @@ lines make it through.
 
 Finally, we unzip the tuples into two vectors.
 
-### Implementing the parallel radix sort
+### Implementing the radix sort
+
+The numbers we read in are at most `u32`. Rust processes use `usize` for
+operations but Rust also uses 32-bit integers for the `usize` type. So we can
+omit `as usize` and `as u32` and allow them to be implicit. Much cleaner.
+
+In series, we use loops to iterate through the digits and sort the numbers.
+
+Fortunately, the sorting algorithm itself does not use comparisons so it is
+parallelizable. When each iteration doesn't depend on the previous iteration,
+we can parallelize that process too.
+
+The parallel approach might actually be slower for this problem because in
+computing terms the input array is pretty small. The overhead of spawning
+threads could outweigh the benefits of parallelization.
+
+```
+$ cargo bench
+
+day_01_bench         fastest       │ slowest       │ median        │ mean          │ samples │ iters
+├─ part1_parallel    28.18 ms      │ 32.34 ms      │ 29.16 ms      │ 29.56 ms      │ 100     │ 100
+╰─ part1_sequential  379.4 µs      │ 530.1 µs      │ 403.9 µs      │ 407.6 µs      │ 100     │ 100
+```
+
+### Calculating the sum of distances
+
+This part is pretty straightforward. The distance between the numbers in the
+left list and the right list is just the absolute difference between the two
+numbers.
+
+In linear algebra, this is just subtraction.
+
+```math
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\
+3 \\
+3 \\
+4
+\end{bmatrix}
+-
+\begin{bmatrix}
+3 \\
+3 \\
+3 \\
+4 \\
+5 \\
+9
+\end{bmatrix}
+=
+\begin{bmatrix}
+-2 \\
+-1 \\
+0 \\
+-1 \\
+-2 \\
+-5
+\end{bmatrix}
+```
+
+Then we take the absolute value of each element in the resulting vector, and
+compute the sum.

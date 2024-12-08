@@ -9,8 +9,6 @@ members = [
 ]
 
 [workspace.dependencies]
-# linear algebra and math
-glam = "0.29.0"
 rayon = "1.10.0"
 
 # diagnostics
